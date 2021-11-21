@@ -6,6 +6,6 @@ app = Flask(__name__)
 def home():
     return render_template('home.html')
 
-@app.route('/about')
-def about():
-    return 'This is a url shortener.'
+@app.route('/your-url')
+def your_url():
+    return render_template('your_url.html')
