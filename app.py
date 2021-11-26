@@ -10,7 +10,7 @@ app.secret_key = 'lkwbdjflijFLJSadh'
 #Home page
 @app.route('/')
 def home():
-    return render_template('home.html', codes=session.keys())
+    return render_template('home.html', codes=session.keys()) #render_template has the special property that I can add however many python variables to it separated by a comma
 
 #Unique-Url page: After clicking 'submit' on the html file, we land here.
 @app.route('/your-url', methods=['GET', 'POST'])
