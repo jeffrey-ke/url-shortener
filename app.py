@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, session, jsonify
 import json
 import os.path
 from werkzeug.utils import secure_filename
@@ -9,7 +10,7 @@ app.secret_key = 'lkwbdjflijFLJSadh'
 #Home page
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('home.html', codes=session.keys())
 
 #Unique-Url page: After clicking 'submit' on the html file, we land here.
 @app.route('/your-url', methods=['GET', 'POST'])
@@ -21,7 +22,7 @@ def your_url():
             with open('urls.json') as urls_file: #if it does, open it and store it with the name 'urls_file'
                 urls = json.load(urls_file) #open the json file as a dictionary
 
-        if request.form['code'] in urls.keys(): #if one of the keys matches the user-given code, alert them that the code's been taken
+        if request.form['code'] in urls.keys(): #if one of the keys matches the user-given code we requested from the Form, alert them that the code's been taken
             flash('That short name has already been taken. Please select another name.')
             return redirect(url_for('home')) #return user to home page
 
@@ -35,11 +36,12 @@ def your_url():
 
         with open('urls.json', 'w') as url_file: #open our json storage file and name it 'url_file'
             json.dump(urls, url_file) #overwrite previous json data with updated urls dictionary
+            session[request.form['code']] = True
         return render_template('your_url.html', code=request.form['code']) #direct user to their unique url page
     else:
         return redirect(url_for('home')) #if the incorrect retrival message was used.
 
-@app.route('/<string:code>') #having '<string:code>' is used to store whatever steing after the / into a variable called 'code'
+@app.route('/<string:code>') #having '<string:code>' is used to store whatever string after the / into a variable called 'code'
 def redirect_to_url(code):
     if os.path.exists('urls.json'):
         with open('urls.json') as urls_file: #open urls.json
@@ -49,3 +51,12 @@ def redirect_to_url(code):
                     return redirect(urls[code]['url']) #redirect the user to whatever url is at the value of the value of the key code
                 else:
                     return redirect(url_for('static', filename='user_files/' + urls[code]['file']))
+    return abort(404)
+
+@app.errorhandler(404) #specific way to make a custom error page
+def page_not_found(error):
+    return render_template('page_not_found.html'), 404 #we return 404 as well as teh template to let the browser know it's a 404 error
+
+@app.route('/api')
+def session_api():
+    return jsonify(list(session.keys()))
